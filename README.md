@@ -9,5 +9,5 @@ Tested using Zabbix
 
 
 ### Todo
-[] Create cloudformation to deploy automation
-[] Create shell script to deploy to multiple accounts 
+- [] Create cloudformation to deploy automation
+- [] Create shell script to deploy to multiple accounts 
