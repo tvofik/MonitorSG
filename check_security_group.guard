@@ -5,3 +5,19 @@ rule security_group when resourceType == "AWS::EC2::SecurityGroup" {
         some ipv4Ranges[*].cidrIp == "10.0.0.0/16"
     }
 }
+
+rule security_group when resourceType == "AWS::EC2::SecurityGroup" {
+    some configuration.ipPermissions[*] {
+        fromPort == 10050
+        toPort == 10051
+        some ipv4Ranges[*].cidrIp == "11.0.0.0/16"
+    }
+}
+
+rule security_group when resourceType == "AWS::EC2::SecurityGroup" {
+    some configuration.ipPermissions[*] {
+        fromPort == 10050
+        toPort == 10051
+        some ipv4Ranges[*].cidrIp == "12.0.0.0/16"
+    }
+}

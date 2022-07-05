@@ -1,33 +1,47 @@
 ---
-    description: Adds port 10050 - 10051 & the specified cidr as a rule to security groups.
-    schemaVersion: "0.3"
-    assumeRole: "{{ AutomationAssumeRole }}"
-    parameters:
-      GroupId:
-        type: String
-        description: (Required) Security Group ID
-        allowedPattern: ^([s][g]\-)([0-9a-f]){1,}$
-      IpAddress:
-        type: String
-        description: (Optional) IP Address of the source of the connection (ex:1.2.3.4/32)
-        allowedPattern: (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
-        default: "0.0.0.0/0"
-      AutomationAssumeRole:
-        type: String
-        description: (Optional) The ARN of the role that allows Automation to perform the actions on your behalf.
-        default: ""
-    mainSteps:
-    - name: AddPortAndIP
-      action: aws:executeAwsApi
-      inputs:
-        Service: ec2
-        Api: AuthorizeSecurityGroupIngress
-        GroupId: "{{GroupId}}"
-        IpPermissions:
-          - IpProtocol: tcp
-            FromPort: 10050
-            ToPort: 10051
-            IpRanges:
-              - CidrIp: "{{ IpAddress }}"
-                Description: Zabbix rule
-      isEnd: true
+description: Adds port 10050 - 10051 & the specified cidr as a rule to security groups.
+schemaVersion: "0.3"
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  GroupId:
+    type: String
+    description: (Required) Security Group ID
+    allowedPattern: ^([s][g]\-)([0-9a-f]){1,}$
+  VPC1CIDR:
+    type: String
+    description: (Required) IP Address of the source of the connection (ex:1.2.3.4/32)
+    allowedPattern: (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+    default: ""
+  VPC2CIDR:
+    type: String
+    description: (Required) IP Address of the source of the connection (ex:1.2.3.4/32)
+    allowedPattern: (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+    default: ""
+  OnPremCIDR:
+    type: String
+    description: (Required) IP Address of the source of the connection (ex:1.2.3.4/32)
+    allowedPattern: (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+    default: ""
+  AutomationAssumeRole:
+    type: String
+    description: (Optional) The ARN of the role that allows Automation to perform the actions on your behalf.
+    default: ""
+mainSteps:
+  - name: AddPortAndIP
+    action: aws:executeAwsApi
+    inputs:
+      Service: ec2
+      Api: AuthorizeSecurityGroupIngress
+      GroupId: "{{GroupId}}"
+      IpPermissions:
+        - IpProtocol: tcp
+          FromPort: 10050
+          ToPort: 10051
+          IpRanges:
+            - CidrIp: "{{ VPC1CIDR }}"
+              Description: Zabbix rule for VPC1
+            - CidrIp: "{{ VPC2CIDR }}"
+              Description: Zabbix rule for VPC2
+            - CidrIp: "{{ OnPremCIDR }}"
+              Description: Zabbix rule for OnPrem
+    isEnd: true

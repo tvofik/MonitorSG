@@ -11,5 +11,5 @@ Tested using Zabbix
 ### Todo
 - [ ] Create cloudformation to deploy automation
 - [ ] Create shell script to deploy to multiple accounts
-- [ ] attach the remediation to the rule
-- [ ] cleanup
+- [ ] Attach the remediation to the rule
+- [ ] Cleanup

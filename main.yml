@@ -1,0 +1,317 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Template for a Lambda Function, The Lambda role, an Instance Role/Profile, an
+  event & an SSM Automation Document that can trigger the lambda & a SSM
+  Automation Role
+Parameters:
+  VPC1CIDR:
+    Type: String
+    Default: ''
+    Description: Enter the CIDR of the 1st VPC.
+    AllowedPattern: >-
+      (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+  VPC2CIDR:
+    Type: String
+    Default: ''
+    Description: Enter the CIDR of the 2nd VPC.
+    AllowedPattern: >-
+      (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+  OnPremCIDR:
+    Type: String
+    Default: ''
+    Description: Enter the CIDR of the On-premises.
+    AllowedPattern: >-
+      (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+  FromPort:
+    Type: Number
+    Default: 10050
+    Description: Enter the port number.
+    MinValue: 0
+    MaxValue: 65535
+  ToPort:
+    Type: Number
+    Default: 10051
+    Description: Enter the the port number of the On-premises.
+    MinValue: 0
+    MaxValue: 65535
+  ConfigRuleName:
+    Type: String
+    Default: ZabbixSecurityGroupRule
+    Description: Enter name og the config rule
+  AmiID:
+    Description: The ID of the AMI.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  Role:
+    Type: String
+    Default: EC2FullAdmin
+    Description: Enter Role for command
+Resources:
+  SecurityGroupAutomationDocument:
+    Type: 'AWS::SSM::Document'
+    Properties:
+      Content:
+        description: >-
+          Adds port 10050 - 10051 & the specified cidr as a rule to security
+          groups.
+        schemaVersion: '0.3'
+        assumeRole: '{{ AutomationAssumeRole }}'
+        parameters:
+          GroupId:
+            type: String
+            description: (Required) Security Group ID
+            allowedPattern: '^([s][g]\-)([0-9a-f]){1,}$'
+          VPC1CIDR:
+            type: String
+            description: >-
+              (Required) IP Address of the source of the connection
+              (ex:1.2.3.4/32)
+            allowedPattern: >-
+              (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+            default: ''
+          VPC2CIDR:
+            type: String
+            description: >-
+              (Required) IP Address of the source of the connection
+              (ex:1.2.3.4/32)
+            allowedPattern: >-
+              (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+            default: ''
+          OnPremCIDR:
+            type: String
+            description: >-
+              (Required) IP Address of the source of the connection
+              (ex:1.2.3.4/32)
+            allowedPattern: >-
+              (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+            default: ''
+          AutomationAssumeRole:
+            type: String
+            description: >-
+              (Optional) The ARN of the role that allows Automation to perform
+              the actions on your behalf.
+            default: ''
+        mainSteps:
+          - name: AddPortAndIP
+            action: 'aws:executeAwsApi'
+            inputs:
+              Service: ec2
+              Api: AuthorizeSecurityGroupIngress
+              GroupId: '{{GroupId}}'
+              IpPermissions:
+                - IpProtocol: tcp
+                  FromPort: 10050
+                  ToPort: 10051
+                  IpRanges:
+                    - CidrIp: '{{ VPC1CIDR }}'
+                      Description: Zabbix rule for VPC1
+                    - CidrIp: '{{ VPC2CIDR }}'
+                      Description: Zabbix rule for VPC2
+                    - CidrIp: '{{ OnPremCIDR }}'
+                      Description: Zabbix rule for OnPrem
+      DocumentType: Automation
+      Name: add_zabbix_to_sg_remediation
+
+  WebServerInstance:
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT10M
+    Type: AWS::EC2::Instance
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          commands:
+            add_config_rule:
+              command: "aws configservice put-config-rule --config-rule file://security_group_config_rule.json"
+              cwd: "~"
+              ignoreErrors: "false"
+          files:
+           ~/security_group_config_rule.json:
+              content: |
+                {
+                    "ConfigRuleName": ${ConfigRuleName},
+                    "Description": "Evaluates whether Security Groups has port 10050 & 10051.",
+                    "Scope": {
+                        "ComplianceResourceTypes": [
+                            "AWS::EC2::SecurityGroup"
+                        ]
+                    },
+                    "Source": {
+                        "Owner": "CUSTOM_POLICY",
+                        "SourceDetails": [
+                            {
+                                "EventSource": "aws.config",
+                                "MessageType": "ConfigurationItemChangeNotification"
+                            },
+                            {
+                                "EventSource": "aws.config",
+                                "MessageType": "OversizedConfigurationItemChangeNotification"
+                            }
+                        ],
+                        "CustomPolicyDetails": {
+                            "PolicyRuntime": "guard-2.x.x",
+                            "PolicyText": "rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == ${VPC1CIDR} }} rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == ${VPC2CIDR} }} rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == ${OnPremCIDR} }}",
+                            "EnableDebugLogDelivery": true
+                        }
+                    }
+                }
+            /etc/cfn/cfn-hup.conf:
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                interval=1
+              mode: 000400
+              owner: root
+              group: root
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
+                action=/opt/aws/bin/cfn-init --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
+                runas=root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: true
+                ensureRunning: true
+                files:
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+    Properties:
+      IamInstanceProfile: EC2FullAdmin
+      ImageId: !Ref AmiID
+      InstanceType: t2.micro
+      Tags:
+        - Key: Name
+          Value: Config_deploy_server
+      UserData: !Base64
+        Fn::Sub: |
+          #!/bin/bash -xe
+          # Update aws-cfn-bootstrap to the latest
+          yum install -y aws-cfn-bootstrap
+          # Call cfn-init script to install files and packages
+          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
+          # Call cfn-signal script to send a signal with exit code
+          /opt/aws/bin/cfn-signal --exit-code $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
+# Main
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Template for a Lambda Function, The Lambda role, an Instance Role/Profile, an
+  event & an SSM Automation Document that can trigger the lambda & a SSM
+  Automation Role
+Parameters:
+  VPC1CIDR:
+    Type: String
+    Default: ''
+    Description: Enter the CIDR of the 1st VPC.
+    AllowedPattern: >-
+      (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+  VPC2CIDR:
+    Type: String
+    Default: ''
+    Description: Enter the CIDR of the 2nd VPC.
+    AllowedPattern: >-
+      (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+  OnPremCIDR:
+    Type: String
+    Default: ''
+    Description: Enter the CIDR of the On-premises.
+    AllowedPattern: >-
+      (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+  Role:
+    Type: String
+    Default: EC2FullAdmin
+    Description: Enter Role for command
+Resources:
+  SecurityGroupAutomationDocument:
+    Type: 'AWS::SSM::Document'
+    Properties:
+      Content:
+        description: >-
+          Adds port 10050 - 10051 & the specified cidr as a rule to security
+          groups.
+        schemaVersion: '0.3'
+        assumeRole: '{{ AutomationAssumeRole }}'
+        parameters:
+          GroupId:
+            type: String
+            description: (Required) Security Group ID
+            allowedPattern: '^([s][g]\-)([0-9a-f]){1,}$'
+          VPC1CIDR:
+            type: String
+            description: >-
+              (Required) IP Address of the source of the connection
+              (ex:1.2.3.4/32)
+            allowedPattern: >-
+              (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+            default: ''
+          VPC2CIDR:
+            type: String
+            description: >-
+              (Required) IP Address of the source of the connection
+              (ex:1.2.3.4/32)
+            allowedPattern: >-
+              (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+            default: ''
+          OnPremCIDR:
+            type: String
+            description: >-
+              (Required) IP Address of the source of the connection
+              (ex:1.2.3.4/32)
+            allowedPattern: >-
+              (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
+            default: ''
+          AutomationAssumeRole:
+            type: String
+            description: >-
+              (Optional) The ARN of the role that allows Automation to perform
+              the actions on your behalf.
+            default: ''
+        mainSteps:
+          - name: AddPortAndIP
+            action: 'aws:executeAwsApi'
+            inputs:
+              Service: ec2
+              Api: AuthorizeSecurityGroupIngress
+              GroupId: '{{GroupId}}'
+              IpPermissions:
+                - IpProtocol: tcp
+                  FromPort: 10050
+                  ToPort: 10051
+                  IpRanges:
+                    - CidrIp: '{{ VPC1CIDR }}'
+                      Description: Zabbix rule for VPC1
+                    - CidrIp: '{{ VPC2CIDR }}'
+                      Description: Zabbix rule for VPC2
+                    - CidrIp: '{{ OnPremCIDR }}'
+                      Description: Zabbix rule for OnPrem
+      DocumentType: Automation
+      Name: add_zabbix_to_sg_remediation
+  Command:
+    Type: 'AWSUtility::CloudFormation::CommandRunner'
+    Properties:
+      Command: !Sub >-
+        aws configservice put-config-rule --config-rule '{ "ConfigRuleName":
+        "ZabbixSecurityGroupRule", "Description": "Evaluates whether Security
+        Groups has port 10050 & 10051.", "Scope": { "ComplianceResourceTypes": [
+        "AWS::EC2::SecurityGroup" ] }, "Source": { "Owner": "CUSTOM_POLICY",
+        "SourceDetails": [ { "EventSource": "aws.config", "MessageType":
+        "ConfigurationItemChangeNotification"}, { "EventSource": "aws.config",
+        "MessageType": "OversizedConfigurationItemChangeNotification" } ],
+        "CustomPolicyDetails": { "PolicyRuntime": "guard-2.x.x", "PolicyText":
+        "rule security_group when resourceType == "AWS::EC2::SecurityGroup" {
+        some configuration.ipPermissions[*] { fromPort == 10050 toPort == 10051
+        some ipv4Ranges[*].cidrIp == ${VPC1CIDR} }} rule security_group when
+        resourceType == "AWS::EC2::SecurityGroup" { some
+        configuration.ipPermissions[*] { fromPort == 10050 toPort == 10051 some
+        ipv4Ranges[*].cidrIp == ${VPC2CIDR} }} rule security_group when
+        resourceType == "AWS::EC2::SecurityGroup" { some
+        configuration.ipPermissions[*] { fromPort == 10050 toPort == 10051 some
+        ipv4Ranges[*].cidrIp == ${OnPremCIDR} }}", "EnableDebugLogDelivery":
+        true } } }' --region ${AWS::Region} && echo 'Success' > /command-output.txt
+      Role: !Ref Role
+      LogGroup: Config-Zabbix
