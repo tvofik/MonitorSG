@@ -23,17 +23,17 @@ Parameters:
     AllowedPattern: >-
       (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
   FromPort:
-    Type: Number
+    Type: String
     Default: 10050
     Description: Enter the port number.
-    MinValue: 0
-    MaxValue: 65535
+    # MinValue: 0
+    # MaxValue: 65535
   ToPort:
-    Type: Number
+    Type: String
     Default: 10051
     Description: Enter the the port number of the On-premises.
-    MinValue: 0
-    MaxValue: 65535
+    # MinValue: 0
+    # MaxValue: 65535
   ConfigRuleName:
     Type: String
     Default: ZabbixSecurityGroupRule
@@ -121,16 +121,16 @@ Resources:
     Metadata:
       AWS::CloudFormation::Init:
         config:
-          commands:
-            add_config_rule:
-              command: "aws configservice put-config-rule --config-rule file://security_group_config_rule.json"
-              cwd: "~"
-              ignoreErrors: "false"
+          # commands:
+          #   add_config_rule:
+          #     command: "aws configservice put-config-rule --config-rule file://security_group_config_rule.json"
+          #     cwd: "~"
+          #     ignoreErrors: "false"
           files:
-           ~/security_group_config_rule.json:
-              content: |
+           /tmp/security_group_config_rule.json:
+              content: !Sub |
                 {
-                    "ConfigRuleName": ${ConfigRuleName},
+                    "ConfigRuleName": "${ConfigRuleName}",
                     "Description": "Evaluates whether Security Groups has port 10050 & 10051.",
                     "Scope": {
                         "ComplianceResourceTypes": [
@@ -151,42 +151,18 @@ Resources:
                         ],
                         "CustomPolicyDetails": {
                             "PolicyRuntime": "guard-2.x.x",
-                            "PolicyText": "rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == ${VPC1CIDR} }} rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == ${VPC2CIDR} }} rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == ${OnPremCIDR} }}",
+                            "PolicyText": "rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == \"${VPC1CIDR}\" }} rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == \"${VPC2CIDR}\" }} rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == \"${OnPremCIDR}\" }}",
                             "EnableDebugLogDelivery": true
                         }
                     }
                 }
-            /etc/cfn/cfn-hup.conf:
-              content: !Sub |
-                [main]
-                stack=${AWS::StackId}
-                region=${AWS::Region}
-                interval=1
-              mode: 000400
-              owner: root
-              group: root
-            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
-              content: !Sub |
-                [cfn-auto-reloader-hook]
-                triggers=post.update
-                path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
-                action=/opt/aws/bin/cfn-init --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
-                runas=root
-          services:
-            sysvinit:
-              cfn-hup:
-                enabled: true
-                ensureRunning: true
-                files:
-                  - /etc/cfn/cfn-hup.conf
-                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
     Properties:
       IamInstanceProfile: EC2FullAdmin
       ImageId: !Ref AmiID
       InstanceType: t2.micro
       Tags:
         - Key: Name
-          Value: Config_deploy_server
+          Value: config_deploy_server
       UserData: !Base64
         Fn::Sub: |
           #!/bin/bash -xe
@@ -194,9 +170,14 @@ Resources:
           yum install -y aws-cfn-bootstrap
           # Call cfn-init script to install files and packages
           /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
+
+          #Install AWSCLI V2
+
+          
           # Call cfn-signal script to send a signal with exit code
           /opt/aws/bin/cfn-signal --exit-code $? --stack ${AWS::StackName} --resource WebServerInstance --region ${AWS::Region}
-# Main
+
+#! Main #!
 
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
