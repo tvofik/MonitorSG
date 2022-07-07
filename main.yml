@@ -6,19 +6,19 @@ Description: >-
 Parameters:
   VPC1CIDR:
     Type: String
-    Default: ''
+    Default: ""
     Description: Enter the CIDR of the 1st VPC.
     AllowedPattern: >-
       (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
   VPC2CIDR:
     Type: String
-    Default: ''
+    Default: ""
     Description: Enter the CIDR of the 2nd VPC.
     AllowedPattern: >-
       (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
   OnPremCIDR:
     Type: String
-    Default: ''
+    Default: ""
     Description: Enter the CIDR of the On-premises.
     AllowedPattern: >-
       (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
@@ -38,24 +38,16 @@ Parameters:
     Type: String
     Default: ZabbixSecurityGroupRule
     Description: Enter name og the config rule
-  AmiID:
-    Description: The ID of the AMI.
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
-  Role:
-    Type: String
-    Default: EC2FullAdmin
-    Description: Enter Role for command
 Resources:
   SecurityGroupAutomationDocument:
-    Type: 'AWS::SSM::Document'
+    Type: "AWS::SSM::Document"
     Properties:
       Content:
         description: >-
           Adds port 10050 - 10051 & the specified cidr as a rule to security
           groups.
-        schemaVersion: '0.3'
-        assumeRole: '{{ AutomationAssumeRole }}'
+        schemaVersion: "0.3"
+        assumeRole: "{{ AutomationAssumeRole }}"
         parameters:
           GroupId:
             type: String
@@ -68,7 +60,7 @@ Resources:
               (ex:1.2.3.4/32)
             allowedPattern: >-
               (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
-            default: ''
+            default: ""
           VPC2CIDR:
             type: String
             description: >-
@@ -76,7 +68,7 @@ Resources:
               (ex:1.2.3.4/32)
             allowedPattern: >-
               (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
-            default: ''
+            default: ""
           OnPremCIDR:
             type: String
             description: >-
@@ -84,51 +76,116 @@ Resources:
               (ex:1.2.3.4/32)
             allowedPattern: >-
               (^$)|^((25[0-5]|(2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})|(^((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?))|(^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}))\/(25[0-5]|2[0-4]\d|[0-1]?\d?\d)$
-            default: ''
+            default: ""
           AutomationAssumeRole:
             type: String
             description: >-
               (Optional) The ARN of the role that allows Automation to perform
               the actions on your behalf.
-            default: ''
+            default: ""
         mainSteps:
           - name: AddPortAndIP
-            action: 'aws:executeAwsApi'
+            action: "aws:executeAwsApi"
             inputs:
               Service: ec2
               Api: AuthorizeSecurityGroupIngress
-              GroupId: '{{GroupId}}'
+              GroupId: "{{GroupId}}"
               IpPermissions:
                 - IpProtocol: tcp
                   FromPort: 10050
                   ToPort: 10051
                   IpRanges:
-                    - CidrIp: '{{ VPC1CIDR }}'
+                    - CidrIp: "{{ VPC1CIDR }}"
                       Description: Zabbix rule for VPC1
-                    - CidrIp: '{{ VPC2CIDR }}'
+                    - CidrIp: "{{ VPC2CIDR }}"
                       Description: Zabbix rule for VPC2
-                    - CidrIp: '{{ OnPremCIDR }}'
+                    - CidrIp: "{{ OnPremCIDR }}"
                       Description: Zabbix rule for OnPrem
       DocumentType: Automation
       Name: add_zabbix_to_sg_remediation
 
-  ConfigRuleForSecurityGroup: 
+  ConfigRuleForSecurityGroup:
     Type: AWS::Config::ConfigRule
-    Properties: 
+    Properties:
       ConfigRuleName: !Ref ConfigRuleName
       Scope:
-        ComplianceResourceTypes: 
+        ComplianceResourceTypes:
           - "AWS::EC2::SecurityGroup"
-      Source: 
+      Source:
         Owner: "CUSTOM_POLICY"
-        SourceDetails: 
-          - 
-            EventSource: "aws.config"
+        SourceDetails:
+          - EventSource: "aws.config"
             MessageType: "ConfigurationItemChangeNotification"
-          - 
-            EventSource: "aws.config"
+          - EventSource: "aws.config"
             MessageType: "OversizedConfigurationItemChangeNotification"
         CustomPolicyDetails:
           PolicyRuntime: "guard-2.x.x"
-          PolicyText: !Sub "rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == \"${VPC1CIDR}\" }} rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == \"${VPC2CIDR}\" }} rule security_group when resourceType == \"AWS::EC2::SecurityGroup\" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == \"${OnPremCIDR}\" }}",
+          PolicyText: !Sub 'rule security_group when resourceType == "AWS::EC2::SecurityGroup" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == "${VPC1CIDR}" }} rule security_group when resourceType == "AWS::EC2::SecurityGroup" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == "${VPC2CIDR}" }} rule security_group when resourceType == "AWS::EC2::SecurityGroup" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == "${OnPremCIDR}" }}'
           EnableDebugLogDelivery: true
+
+  # ConfigRuleForSecurityGroupRemediation:
+  #   DependsOn: ConfigRuleForSecurityGroup
+  #   Type: AWS::Config::RemediationConfiguration
+  #   Properties:
+  #     ConfigRuleName: !Ref ConfigRuleName
+  #     ResourceType: "AWS::EC2::SecurityGroup"
+  #     TargetId: !Ref SecurityGroupAutomationDocument
+  #     TargetType: "SSM_DOCUMENT"
+  #     TargetVersion: "1"
+  #     Automatic: True
+  #     ExecutionControls:
+  #       SsmControls:
+  #         ConcurrentExecutionRatePercentage: 2
+  #         ErrorPercentage: 5
+  #     Parameters:
+  #       GroupId:
+  #         ResourceValue:
+  #           Value: "RESOURCE_ID"
+  #       VPC1CIDR:
+  #         StaticValue:
+  #           Values:
+  #             - !Ref VPC1CIDR
+  #       VPC2CIDR:
+  #         StaticValue:
+  #           Values:
+  #             - !Ref VPC2CIDR
+  #       OnPremCIDR:
+  #         StaticValue:
+  #           Values:
+  #             - !Ref OnPremCIDR
+  #       AutomationAssumeRole:
+  #         StaticValue:
+  #           Values:
+  #             - arn:aws:iam::123456789012:role/FT-SSM-Automation-ExecutionRole #! Change AccounID
+  #     MaximumAutomaticAttempts: 5
+  #     RetryAttemptSeconds: 60
+
+  # ConfigRuleForSecurityGroupRemediation:
+  #   DependsOn: ConfigRuleForSecurityGroup
+  #   Type: AWS::Config::RemediationConfiguration
+  #   Properties:
+  #     ConfigRuleName: !Ref ConfigRuleName
+  #     ResourceType: "AWS::EC2::SecurityGroup"
+  #     TargetId: !Ref SecurityGroupAutomationDocument
+  #     TargetType: "SSM_DOCUMENT"
+  #     TargetVersion: "1"
+  #     ExecutionControls:
+  #       SsmControls:
+  #         ConcurrentExecutionRatePercentage: 2
+  #         ErrorPercentage: 5
+  #     Parameters:
+  #       GroupId:
+  #         ResourceValue:
+  #           Value: "RESOURCE_ID"
+  #       VPC1CIDR:
+  #         StaticValue:
+  #           Values:
+  #             - !Ref VPC1CIDR
+  #       VPC2CIDR:
+  #         StaticValue:
+  #           Values:
+  #             - !Ref VPC2CIDR
+  #       OnPremCIDR:
+  #         StaticValue:
+  #           Values:
+  #             - !Ref OnPremCIDR
