@@ -38,6 +38,10 @@ Parameters:
     Type: String
     Default: ZabbixSecurityGroupRule
     Description: Enter name og the config rule
+  RoleName:
+    Type: String
+    Default: ""
+    Description: Enter name of automation role.
 Resources:
   SecurityGroupAutomationDocument:
     Type: "AWS::SSM::Document"
@@ -123,69 +127,39 @@ Resources:
           PolicyText: !Sub 'rule security_group when resourceType == "AWS::EC2::SecurityGroup" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == "${VPC1CIDR}" }} rule security_group when resourceType == "AWS::EC2::SecurityGroup" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == "${VPC2CIDR}" }} rule security_group when resourceType == "AWS::EC2::SecurityGroup" { some configuration.ipPermissions[*] { fromPort == ${FromPort} toPort == ${ToPort} some ipv4Ranges[*].cidrIp == "${OnPremCIDR}" }}'
           EnableDebugLogDelivery: true
 
-  # ConfigRuleForSecurityGroupRemediation:
-  #   DependsOn: ConfigRuleForSecurityGroup
-  #   Type: AWS::Config::RemediationConfiguration
-  #   Properties:
-  #     ConfigRuleName: !Ref ConfigRuleName
-  #     ResourceType: "AWS::EC2::SecurityGroup"
-  #     TargetId: !Ref SecurityGroupAutomationDocument
-  #     TargetType: "SSM_DOCUMENT"
-  #     TargetVersion: "1"
-  #     Automatic: True
-  #     ExecutionControls:
-  #       SsmControls:
-  #         ConcurrentExecutionRatePercentage: 2
-  #         ErrorPercentage: 5
-  #     Parameters:
-  #       GroupId:
-  #         ResourceValue:
-  #           Value: "RESOURCE_ID"
-  #       VPC1CIDR:
-  #         StaticValue:
-  #           Values:
-  #             - !Ref VPC1CIDR
-  #       VPC2CIDR:
-  #         StaticValue:
-  #           Values:
-  #             - !Ref VPC2CIDR
-  #       OnPremCIDR:
-  #         StaticValue:
-  #           Values:
-  #             - !Ref OnPremCIDR
-  #       AutomationAssumeRole:
-  #         StaticValue:
-  #           Values:
-  #             - arn:aws:iam::123456789012:role/FT-SSM-Automation-ExecutionRole #! Change AccounID
-  #     MaximumAutomaticAttempts: 5
-  #     RetryAttemptSeconds: 60
-
-  # ConfigRuleForSecurityGroupRemediation:
-  #   DependsOn: ConfigRuleForSecurityGroup
-  #   Type: AWS::Config::RemediationConfiguration
-  #   Properties:
-  #     ConfigRuleName: !Ref ConfigRuleName
-  #     ResourceType: "AWS::EC2::SecurityGroup"
-  #     TargetId: !Ref SecurityGroupAutomationDocument
-  #     TargetType: "SSM_DOCUMENT"
-  #     TargetVersion: "1"
-  #     ExecutionControls:
-  #       SsmControls:
-  #         ConcurrentExecutionRatePercentage: 2
-  #         ErrorPercentage: 5
-  #     Parameters:
-  #       GroupId:
-  #         ResourceValue:
-  #           Value: "RESOURCE_ID"
-  #       VPC1CIDR:
-  #         StaticValue:
-  #           Values:
-  #             - !Ref VPC1CIDR
-  #       VPC2CIDR:
-  #         StaticValue:
-  #           Values:
-  #             - !Ref VPC2CIDR
-  #       OnPremCIDR:
-  #         StaticValue:
-  #           Values:
-  #             - !Ref OnPremCIDR
+  ConfigRuleForSecurityGroupRemediation:
+    DependsOn: ConfigRuleForSecurityGroup
+    Type: AWS::Config::RemediationConfiguration
+    Properties:
+      ConfigRuleName: !Ref ConfigRuleName
+      ResourceType: "AWS::EC2::SecurityGroup"
+      TargetId: !Ref SecurityGroupAutomationDocument
+      TargetType: "SSM_DOCUMENT"
+      TargetVersion: "1"
+      Automatic: True
+      ExecutionControls:
+        SsmControls:
+          ConcurrentExecutionRatePercentage: 2
+          ErrorPercentage: 5
+      Parameters:
+        GroupId:
+          ResourceValue:
+            Value: "RESOURCE_ID"
+        VPC1CIDR:
+          StaticValue:
+            Values:
+              - !Ref VPC1CIDR
+        VPC2CIDR:
+          StaticValue:
+            Values:
+              - !Ref VPC2CIDR
+        OnPremCIDR:
+          StaticValue:
+            Values:
+              - !Ref OnPremCIDR
+        AutomationAssumeRole:
+          StaticValue:
+            Values:
+              - !Sub "arn:aws:iam::${AWS::AccountID}:role/${RoleName}"
+      MaximumAutomaticAttempts: 5
+      RetryAttemptSeconds: 60
