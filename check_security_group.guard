@@ -1,4 +1,5 @@
 rule security_group when resourceType == "AWS::EC2::SecurityGroup" {
+    resourceName != "default"
     some configuration.ipPermissions[*] {
         fromPort == 10050
         toPort == 10051
@@ -7,6 +8,7 @@ rule security_group when resourceType == "AWS::EC2::SecurityGroup" {
 }
 
 rule security_group when resourceType == "AWS::EC2::SecurityGroup" {
+    resourceName != "default"
     some configuration.ipPermissions[*] {
         fromPort == 10050
         toPort == 10051
@@ -15,6 +17,7 @@ rule security_group when resourceType == "AWS::EC2::SecurityGroup" {
 }
 
 rule security_group when resourceType == "AWS::EC2::SecurityGroup" {
+    resourceName != "default"
     some configuration.ipPermissions[*] {
         fromPort == 10050
         toPort == 10051
